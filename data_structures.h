@@ -4,6 +4,11 @@
 #include <iostream>
 #include <cmath>
 
+/**
+ * 定义了数据结构和生成随机数据的函数;
+ *
+ */
+
 // 定义各个表的列名
 struct Customer
 {

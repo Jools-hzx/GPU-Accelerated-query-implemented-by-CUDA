@@ -5,14 +5,47 @@
 #include "data_structures.h"
 #include "utils.cuh"
 
-// 统计各个表完成扫描的总数据量
+// 记录各个表扫描到的总数据量
 __device__ int scanCustomerCounter = 0;
 __device__ int scanOrderCounter = 0;
 __device__ int scanLineitemCounter = 0;
 
-// GPU 加速扫描 Customer 表
+/**
+ * @brief GPU 加速扫描 Customer 表
+ *
+ * @param data 指向 `Customer` 对象数组的指针，表示要扫描的数据。
+ * @param size 表示 `Customer` 对象数组的大小，即数据的元素总数。
+ *
+ * @details
+ * 每个线程处理一个 `Customer` 对象，通过其索引计算每个线程应该处理的数据。
+ * 计算每个 `Customer` 对象的 `C_CUSTKEY` 值的总和，并将每个线程的计数结果通过原子操作累加到全局计数器 `scanCustomerCounter` 中。
+ */
 __global__ void scanCustomer(Customer *data, int size)
 {
+    /*
+    作用: 计算每一个线程在grid 中的唯一全局索引
+    解释:
+    1. threadIdx.x: 这是当前线程在其线程块中的索引。假设每个线程块包含 512 个线程，则 threadIdx.x 的值范围是从 0 到 511。
+    2. blockIdx.x: 这是当前线程块在网格中的索引。假设网格中有多个线程块，则 blockIdx.x 的值范围取决于网格中线程块的数量。
+    3. blockDim.x: 这是每个线程块中线程的数量。设每个线程块包含 512 个线程，即 blockDim.x 的值为 512。
+
+    例子:
+    假设你要对一个长度为 1024 的数组进行操作，并且你使用了 2 个线程块(Block)，每个线程块包含 512 个线程。如何为每一个线程计算其全局索引的:
+    - 设置线程块数量 (numBlocks): 2
+    - 每个线程块中的线程数量 (blockSize): 512
+
+    计算线程块 0 中的线程：对于 blockIdx.x = 0:
+        threadIdx.x = 0 时，idx = 512 * 0 + 0 = 0
+        threadIdx.x = 1 时，idx = 512 * 0 + 1 = 1
+        ...
+        threadIdx.x = 511 时，idx = 512 * 0 + 511 = 511
+
+    线程块1中的线程 对于 blockIdx.x = 1:
+        threadIdx.x = 0 时，idx = 512 * 1 + 0 = 512
+        threadIdx.x = 1 时，idx = 512 * 1 + 1 = 513
+        ...
+        threadIdx.x = 511 时，idx = 512 * 1 + 511 = 1023
+*/
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     if (idx >= size)
         return;
@@ -27,10 +60,21 @@ __global__ void scanCustomer(Customer *data, int size)
     atomicAdd(&scanCustomerCounter, localCounter);
 }
 
-// GPU 加速扫描 Orders 表
+/**
+ * @brief GPU 加速扫描 Orders 表
+ *
+ * @param data 指向 `Orders` 对象数组的指针，表示要扫描的数据。
+ * @param size 表示 `Orders` 对象数组的大小，即数据的元素总数。
+ *
+ * @details
+ * 每个线程处理一个 `Orders` 对象，通过其索引计算每个线程应该处理的数据。
+ * 计算每个 `Orders` 对象的 `O_TOTALPRICE` 值的总和;
+ * 并将每个线程的计数结果通过原子操作累加到全局计数器 `scanOrderCounter` 中。
+ */
 __global__ void scanOrders(Orders *data, int size)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
+
     if (idx >= size)
         return;
 
@@ -44,7 +88,17 @@ __global__ void scanOrders(Orders *data, int size)
     atomicAdd(&scanOrderCounter, localCounter);
 }
 
-// GPU 加速扫描 Lineitems 表
+/**
+ * @brief GPU 加速扫描 Lineitems 表
+ *
+ * @param data 指向 `Lineitem` 对象数组的指针，表示要扫描的数据。
+ * @param size 表示 `Lineitem` 对象数组的大小，即数据的元素总数。
+ *
+ * @details
+ * 每个线程处理一个 `Lineitem` 对象，通过其索引计算每个线程应该处理的数据。
+ * 计算每个 `Lineitem` 对象的 `L_QUANTITY` 值的总和，
+ * 并将每个线程的计数结果通过原子操作累加到全局计数器 `scanLineitemCounter` 中。
+ */
 __global__ void scanLineitems(Lineitem *data, int size)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -61,6 +115,7 @@ __global__ void scanLineitems(Lineitem *data, int size)
     atomicAdd(&scanLineitemCounter, localCounter);
 }
 
+// 输出各个表扫描到的总数据量
 template <typename T>
 void checkScanResults(const T &deviceCounter, const char *tableName)
 {
@@ -75,10 +130,10 @@ int main()
 {
     injectData();
 
-    // 计算 BlockSize BlockNums
+    // 计算 BlockSize; BlockNums
     dim3 blockSize(512);
 
-    //每次扫描表
+    // 定义每次扫描表的 block 数目
     dim3 numBlocksCustomers((customers.size() + blockSize.x - 1) / blockSize.x);
     dim3 numBlocksOrders((orders.size() + blockSize.x - 1) / blockSize.x);
     dim3 numBlocksLineitems((lineitems.size() + blockSize.x - 1) / blockSize.x);
