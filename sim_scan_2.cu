@@ -3,12 +3,14 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "data_structures.h"
+#include "utils.cuh"
 
-// 扫描数据行计数器
+// 统计各个表完成扫描的总数据量
 __device__ int scanCustomerCounter = 0;
 __device__ int scanOrderCounter = 0;
 __device__ int scanLineitemCounter = 0;
 
+// GPU 加速扫描 Customer 表
 __global__ void scanCustomer(Customer *data, int size)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -18,12 +20,14 @@ __global__ void scanCustomer(Customer *data, int size)
     int localCounter = 0;
     int localKeySum = 0;
 
+    // Some computing task
     localKeySum += data[idx].C_CUSTKEY;
     localCounter += 1;
 
     atomicAdd(&scanCustomerCounter, localCounter);
 }
 
+// GPU 加速扫描 Orders 表
 __global__ void scanOrders(Orders *data, int size)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -33,18 +37,21 @@ __global__ void scanOrders(Orders *data, int size)
     int localCounter = 0;
     int localPriceSum = 0;
 
+    // Some computing task
     localPriceSum += (int)data[idx].O_TOTALPRICE;
     localCounter += 1;
 
     atomicAdd(&scanOrderCounter, localCounter);
 }
 
+// GPU 加速扫描 Lineitems 表
 __global__ void scanLineitems(Lineitem *data, int size)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     if (idx >= size)
         return;
 
+    // Some computing task
     int localCounter = 0;
     int localQualitySum = 0;
 
@@ -52,15 +59,6 @@ __global__ void scanLineitems(Lineitem *data, int size)
     localCounter += 1;
 
     atomicAdd(&scanLineitemCounter, localCounter);
-}
-
-void checkCudaError(cudaError_t error)
-{
-    if (error != cudaSuccess)
-    {
-        fprintf(stderr, "CUDA Error: %s\n", cudaGetErrorString(error));
-        exit(-1);
-    }
 }
 
 template <typename T>
@@ -73,28 +71,14 @@ void checkScanResults(const T &deviceCounter, const char *tableName)
     std::cout << "Total scanned elements [Table-" << tableName << "]: " << hostCounter << std::endl;
 }
 
-void allocateAndLaunchKernel(
-    void *&dev_data,
-    const void *host_data,
-    size_t count,
-    size_t elem_size,
-    dim3 blockSize,
-    dim3 numBlocks,
-    void (*kernel)(void *, int))
-{
-    checkCudaError(cudaMalloc(&dev_data, count * elem_size));
-    checkCudaError(cudaMemcpy(dev_data, host_data, count * elem_size, cudaMemcpyHostToDevice));
-
-    kernel<<<numBlocks, blockSize>>>((decltype(dev_data))dev_data, count);
-
-    cudaFree(dev_data);
-}
-
 int main()
 {
     injectData();
 
+    // 计算 BlockSize BlockNums
     dim3 blockSize(512);
+
+    //每次扫描表
     dim3 numBlocksCustomers((customers.size() + blockSize.x - 1) / blockSize.x);
     dim3 numBlocksOrders((orders.size() + blockSize.x - 1) / blockSize.x);
     dim3 numBlocksLineitems((lineitems.size() + blockSize.x - 1) / blockSize.x);

@@ -66,5 +66,20 @@ int main()
 
     std::cout << "[Scan] Total time taken by CPU for all scans: " << duration.count() << " ms" << std::endl;
 
+    // Record stop time and calculate total time
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    totalMilliseconds += milliseconds;
+
+    checkScanResults(scanCustomerCounter, "Customer");
+    checkScanResults(scanOrderCounter, "Order");
+    checkScanResults(scanLineitemCounter, "LineItem");
+
+    std::cout << "[Scan]Total time taken by GPU for all scans: " << totalMilliseconds << " ms\n";
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+
     return 0;
 }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 
+// 定义各个表的列名
 struct Customer
 {
     int C_CUSTKEY;
@@ -43,7 +44,7 @@ void generateRandomData(std::vector<Customer> &vec, size_t numElements)
         vec.push_back(customer);
     }
     // 打印生成数据的数量
-    std::cout << "Generated " << numElements << " elements." << std::endl;
+    std::cout << "Generated " << numElements << " elements for Customers table" << std::endl;
 }
 
 template <>
@@ -59,7 +60,7 @@ void generateRandomData(std::vector<Orders> &vec, size_t numElements)
         vec.push_back(order);
     }
     // 打印生成数据的数量
-    std::cout << "Generated " << numElements << " elements." << std::endl;
+    std::cout << "Generated " << numElements << " elements for Orders table" << std::endl;
 }
 
 template <>
@@ -73,7 +74,7 @@ void generateRandomData(std::vector<Lineitem> &vec, size_t numElements)
         vec.push_back(item);
     }
     // 打印生成数据的数量
-    std::cout << "Generated " << numElements << " elements." << std::endl;
+    std::cout << "Generated " << numElements << " elements for Lineitems table" << std::endl;
 }
 
 void injectData()
@@ -83,4 +84,14 @@ void injectData()
     generateRandomData(customers, 1500000);
     generateRandomData(orders, 15000000);
     generateRandomData(lineitems, 59986052);
+}
+
+// 可以指定各个表插入数据
+void injectData(int numCust, int numOrder, int lineItmesNum)
+{
+
+    // 假设 generateRandomData 是一个现有的函数，用来生成随机数据。
+    generateRandomData(customers, numCust);
+    generateRandomData(orders, numOrder);
+    generateRandomData(lineitems, lineItmesNum);
 }
