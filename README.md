@@ -43,3 +43,13 @@ nvcc 会自动处理CUDA代码的编译，并且调用gcc (或在Windows上是cl
 ```bash
 nvcc -arch=sm_50 -o example example.cu
 ```
+
+对于本Demo 可以指定编译选项如下:
+```bash
+nvcc -arch=sm_89 -o scan_agg_gpu scan_agg.cu -O3
+```
+
+然后执行
+```bash
+./scan_agg_gpu
+```
