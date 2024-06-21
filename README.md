@@ -1,15 +1,27 @@
-sim_scan_2.cu	      基于CUDA分别扫描三张数据表
+sim_scan_2.cu	       基于CUDA分别扫描三张数据表
 
-sim_scan_2.cpp	    基于CUDA分别扫描三张数据表
+sim_scan_2.cpp	      基于CUDA分别扫描三张数据表
 
-scan_agg.cu		  基于 CUDA 扫描三张表+联表查询+运算
+scan_agg.cu		        基于 CUDA 扫描三张表+联表查询+运算
 
-scan_agg.cpu		基于 CUDA 扫描三张表+联表查询+运算
+scan_agg.cpu		       基于 CUDA 扫描三张表+联表查询+运算
 
-utils.cuh		         CUDA 工具代码
+utils.cuh		           CUDA 工具代码
 
 data_structures.h 	  定义三张表的列名
 
+-----------------------------------
+6.20 更新:
+    SELECT C.C_NAME, O.O_ORDERDATE, L.L_QUANTITY
+    FROM Customer C
+    JOIN Orders O ON C.C_CUSTKEY = O.O_CUSTKEY
+    JOIN Lineitem L ON O.O_ORDERKEY = L.L_ORDERKEY
+    WHERE O.O_TOTALPRICE > threshold;
+    
+scan_select_project_gpu.cu  基于 CUDA 实现上述 SQL 逻辑, ./scan_select_project_gpu 运行
+scan_select_project_cpu.cpp 基于 C++ 实现上述 SQL 逻辑, ./scan_select_project_cpu  执行
+
+-----------------------------------
 
 ## 编译执行
 1.  打开命令行界面。 
