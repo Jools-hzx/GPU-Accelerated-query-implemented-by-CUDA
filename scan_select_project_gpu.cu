@@ -6,11 +6,28 @@
 #include "utils.cuh"
 
 /**
+ *  模拟 SQL:
  *  SELECT C.C_NAME, O.O_ORDERDATE, L.L_QUANTITY
     FROM Customer C
     JOIN Orders O ON C.C_CUSTKEY = O.O_CUSTKEY
     JOIN Lineitem L ON O.O_ORDERKEY = L.L_ORDERKEY
     WHERE O.O_TOTALPRICE > threshold;
+ */
+
+/**
+ * 处理查询并统计满足特定条件的订单数量。
+ *
+ * @param customers 指向 Customer 结构体数组的指针，包含所有客户的信息。
+ * @param numCustomers 整数，表示 customers 数组中的元素数量。
+ * @param orders 指向 Orders 结构体数组的指针，包含所有订单的信息。
+ * @param numOrders 整数，表示 orders 数组中的元素数量。
+ * @param lineitems 指向 Lineitem 结构体数组的指针，包含所有订单项的信息。
+ * @param numLineitems 整数，表示 lineitems 数组中的元素数量。
+ * @param threshold 双精度浮点数，用于设置订单总价的筛选阈值。
+ * @param resultCount 指向整数的指针，用于存储满足条件的订单数量。
+ *
+ * 此函数将遍历所有订单，并检查它们的总价是否超过了 threshold。对于每个满足条件的订单，
+ * 该函数将增加存储在 resultCount 指针所指向的值。
  */
 __global__ void processQuery(
     Customer *customers,
@@ -37,7 +54,7 @@ __global__ void processQuery(
                 {
                     count++;
                     // For simplicity, we just count the matches. In production, you might store results.
-                    printf("Customer Name: %s, Order Date: %s, Quantity: %d\n", customers[idx].C_NAME, orders[i].O_ORDERDATE, lineitems[j].L_QUANTITY);
+                    printf("------ [Customer Name: %s, Order Date: %s, Quantity: %d ] ------\n", customers[idx].C_NAME, orders[i].O_ORDERDATE, lineitems[j].L_QUANTITY);
                 }
             }
         }
@@ -98,7 +115,7 @@ void allocateAndLaunchQueryKernel(
 int main()
 {
     // 示例使用数据和调用函数（省略数据初始化）
-    injectData(1500000, 150000, 1000);
+    injectData(1, 1, 1);
     int hostResultCount = 0;
     double threshold = 1000.0;
 

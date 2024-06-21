@@ -34,7 +34,7 @@ void processQueryCPU(
 int main()
 {
     // Example usage of the data and calling the function (data initialization skipped)
-    injectData(1500000, 150000, 1000);
+    injectData(1, 1, 1);
 
     double threshold = 1000.0;
     int resultCount = 0;
